@@ -25,8 +25,8 @@ body {
 全体
 ---------------------*/
 h1 {
-  background-color: #333;
-  color: #fff;
+  background-color: var(#030303);
+  color: var(#0f0f0f);
   padding: 20px;
   text-align: center;
 }
