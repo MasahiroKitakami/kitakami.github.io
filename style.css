@@ -24,7 +24,7 @@ body {
 /*---------------------
 全体
 ---------------------*/
-h1 {03
+h1 {
   background-color: var(--theme-color);
   color: var(#030303);
   padding: 20px;
