@@ -3,7 +3,7 @@
 ---------------------*/
 
 :root {
-  --theme-color:#a0a0a0;
+  --theme-color:#00a0a0;
 }
 
 * {
@@ -21,11 +21,9 @@ body {
   color: #333;
 }
 
-
 /*---------------------
 全体
 ---------------------*/
-
 h1, h2, h3 {
   color: var(--theme-color);
   border-bottom: dashed 0.1em var(--theme-color);
@@ -72,6 +70,9 @@ th, td{
   border: solid lpx #f0f0f0;
   padding: 0.5rem;
 }
+
+
+
 
 
 
