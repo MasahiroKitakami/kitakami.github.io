@@ -24,9 +24,9 @@ body {
 /*---------------------
 全体
 ---------------------*/
-h1 {
-  background-color: var(#030303);
-  color: var(#0f0f0f);
+h1 {03
+  background-color: var(--theme-color);
+  color: var(#030303);
   padding: 20px;
   text-align: center;
 }
