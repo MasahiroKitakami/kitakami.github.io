@@ -27,7 +27,15 @@ header {
   padding: 20px;
   text-align: center;
 }
-
+.container {
+  width: 80%;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+}
+.section {
+ 　 margin-bottom: 20px;
+}
 /*---------------------
 全体
 ---------------------*/
