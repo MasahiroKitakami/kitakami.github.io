@@ -8,6 +8,9 @@
 </head>
 <body>
   <h1>フードファイター</h1>
+  <h2>実行画面</h2>
+  <img src='food_title.PNG'></img>
+  <img src='food_play.PNG'></img>
   <h2>解説</h2>
   <p>
     VBA（バーチャルボーイアドバンス）というゲームボーイのエミュレータを使用したゲーム。<br>
@@ -18,10 +21,1594 @@
     ダッシュ中は敵から逃げやすくなるが、早すぎるので級には曲がれなくなってしまいます。<br>
     ステージはパックマンと同じ形の物を使用しております。<br>
   </p>
+  <h2>ソースコード</h2>
+  <h3>gba1.h</h3>
   <pre>
     <code>
-    
-  </code>
+#ifndef _GBA1_H_
+#define _GBA1_H_
+
+typedef unsigned short hword;		// Half word (2 bytes)
+typedef unsigned char  byte;		// Byte (1 byte)
+
+typedef struct {
+	hword x;		/* x coordinate for point */
+	hword y;		/* y coordinate for point */
+} point;
+
+
+#define VRAM		0x06000000	// Video RAM frame buffer
+#define IOBASE		0x04000000	// I/O register base address
+
+#define LCD_WIDTH		240		// 240 dots / horizontal line
+#define LCD_HEIGHT		160		// 160 dots / vertical line
+#define LCD_CHAR_WIDTH	30		// width for character unit
+#define LCD_CHAR_HEIGHT	20		// height for character unit
+#define CHAR_WIDTH		8		// character width
+#define CHAR_HEIGHT		8		// character height
+
+#define BGR(r, g, b)	(((b) << 10) + ((g) << 5) + (r))
+
+#define KEY_STATUS	(IOBASE + 304)	// Key status
+#define KEY_L		0x0200		// L
+#define KEY_R		0x0100		// R
+#define KEY_DOWN	0x0080		// Down
+#define KEY_UP		0x0040		// Up
+#define KEY_LEFT	0x0020		// Left
+#define KEY_RIGHT	0x0010		// Right
+#define KEY_START	0x0008		// Start
+#define KEY_SELECT	0x0004		// Select
+#define KEY_B		0x0002		// B
+#define KEY_A		0x0001		// A
+#define KEY_ALL		0x03FF		// All key bits
+
+
+#endif      
+    </code>
   </pre>
+
+  <h3>8x8ascii.h</h3>
+  <pre>
+    <code>
+unsigned char char8x8[256][8] = {
+  { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 0
+  { 0x7e, 0x81, 0xa5, 0x81, 0xbd, 0x99, 0x81, 0x7e },	// ASCII code 1
+  { 0x7e, 0xff, 0xdb, 0xff, 0xc3, 0xe7, 0xff, 0x7e },	// ASCII code 2
+  { 0x6c, 0xfe, 0xfe, 0xfe, 0x7c, 0x38, 0x10, 0x00 },	// ASCII code 3
+  { 0x10, 0x38, 0x7c, 0xfe, 0x7c, 0x38, 0x10, 0x00 },	// ASCII code 4
+  { 0x38, 0x7c, 0x38, 0xfe, 0xfe, 0xd6, 0x10, 0x38 },	// ASCII code 5
+  { 0x10, 0x10, 0x38, 0x7c, 0xfe, 0x7c, 0x10, 0x38 },	// ASCII code 6
+  { 0x00, 0x00, 0x18, 0x3c, 0x3c, 0x18, 0x00, 0x00 },	// ASCII code 7
+  { 0xff, 0xff, 0xe7, 0xc3, 0xc3, 0xe7, 0xff, 0xff },	// ASCII code 8
+  { 0x00, 0x3c, 0x66, 0x42, 0x42, 0x66, 0x3c, 0x00 },	// ASCII code 9
+  { 0xff, 0xc3, 0x99, 0xbd, 0xbd, 0x99, 0xc3, 0xff },	// ASCII code 10
+  { 0x0f, 0x07, 0x0f, 0x7d, 0xcc, 0xcc, 0xcc, 0x78 },	// ASCII code 11
+  { 0x3c, 0x66, 0x66, 0x66, 0x3c, 0x18, 0x7e, 0x18 },	// ASCII code 12
+  { 0x3f, 0x33, 0x3f, 0x30, 0x30, 0x70, 0xf0, 0xe0 },	// ASCII code 13
+  { 0x7f, 0x63, 0x7f, 0x63, 0x63, 0x67, 0xe6, 0xc0 },	// ASCII code 14
+  { 0x99, 0x5a, 0x3c, 0xe7, 0xe7, 0x3c, 0x5a, 0x99 },	// ASCII code 15
+  { 0x80, 0xe0, 0xf8, 0xfe, 0xf8, 0xe0, 0x80, 0x00 },	// ASCII code 16
+  { 0x02, 0x0e, 0x3e, 0xfe, 0x3e, 0x0e, 0x02, 0x00 },	// ASCII code 17
+  { 0x18, 0x3c, 0x7e, 0x18, 0x18, 0x7e, 0x3c, 0x18 },	// ASCII code 18
+  { 0x66, 0x66, 0x66, 0x66, 0x66, 0x00, 0x66, 0x00 },	// ASCII code 19
+  { 0x7f, 0xdb, 0xdb, 0x7b, 0x1b, 0x1b, 0x1b, 0x00 },	// ASCII code 20
+  { 0x7e, 0xc3, 0x78, 0xcc, 0xcc, 0x78, 0x8c, 0xf8 },	// ASCII code 21
+  { 0x00, 0x00, 0x00, 0x00, 0x7e, 0x7e, 0x7e, 0x00 },	// ASCII code 22
+  { 0x18, 0x3c, 0x7e, 0x18, 0x7e, 0x3c, 0x18, 0xff },	// ASCII code 23
+  { 0x18, 0x3c, 0x7e, 0x18, 0x18, 0x18, 0x18, 0x00 },	// ASCII code 24
+  { 0x18, 0x18, 0x18, 0x18, 0x7e, 0x3c, 0x18, 0x00 },	// ASCII code 25
+  { 0x00, 0x18, 0x0c, 0xfe, 0x0c, 0x18, 0x00, 0x00 },	// ASCII code 26
+  { 0x00, 0x30, 0x60, 0xfe, 0x60, 0x30, 0x00, 0x00 },	// ASCII code 27
+  { 0x00, 0x00, 0xc0, 0xc0, 0xc0, 0xfe, 0x00, 0x00 },	// ASCII code 28
+  { 0x00, 0x24, 0x66, 0xff, 0x66, 0x24, 0x00, 0x00 },	// ASCII code 29
+  { 0x00, 0x18, 0x3c, 0x7e, 0xff, 0xff, 0x00, 0x00 },	// ASCII code 30
+  { 0x00, 0xff, 0xff, 0x7e, 0x3c, 0x18, 0x00, 0x00 },	// ASCII code 31
+  { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 32
+  { 0x30, 0x78, 0x78, 0x30, 0x30, 0x00, 0x30, 0x00 },	// ASCII code 33
+  { 0x6c, 0x6c, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 34
+  { 0x6c, 0x6c, 0xfe, 0x6c, 0xfe, 0x6c, 0x6c, 0x00 },	// ASCII code 35
+  { 0x30, 0x7c, 0xc0, 0x78, 0x0c, 0xf8, 0x30, 0x00 },	// ASCII code 36
+  { 0x00, 0xc6, 0xcc, 0x18, 0x30, 0x66, 0xc6, 0x00 },	// ASCII code 37
+  { 0x38, 0x6c, 0x38, 0x76, 0xdc, 0xcc, 0x76, 0x00 },	// ASCII code 38
+  { 0x60, 0x60, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 39
+  { 0x18, 0x30, 0x60, 0x60, 0x60, 0x30, 0x18, 0x00 },	// ASCII code 40
+  { 0x60, 0x30, 0x18, 0x18, 0x18, 0x30, 0x60, 0x00 },	// ASCII code 41
+  { 0x00, 0x66, 0x3c, 0xff, 0x3c, 0x66, 0x00, 0x00 },	// ASCII code 42
+  { 0x00, 0x30, 0x30, 0xfc, 0x30, 0x30, 0x00, 0x00 },	// ASCII code 43
+  { 0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x30, 0x60 },	// ASCII code 44
+  { 0x00, 0x00, 0x00, 0xfc, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 45
+  { 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x30, 0x00 },	// ASCII code 46
+  { 0x06, 0x0c, 0x18, 0x30, 0x60, 0xc0, 0x80, 0x00 },	// ASCII code 47
+  { 0x78, 0xcc, 0xdc, 0xfc, 0xec, 0xcc, 0x78, 0x00 },	// ASCII code 48
+  { 0x30, 0xf0, 0x30, 0x30, 0x30, 0x30, 0xfc, 0x00 },	// ASCII code 49
+  { 0x78, 0xcc, 0x0c, 0x38, 0x60, 0xcc, 0xfc, 0x00 },	// ASCII code 50
+  { 0x78, 0xcc, 0x0c, 0x38, 0x0c, 0xcc, 0x78, 0x00 },	// ASCII code 51
+  { 0x1c, 0x3c, 0x6c, 0xcc, 0xfe, 0x0c, 0x0c, 0x00 },	// ASCII code 52
+  { 0xfc, 0xc0, 0xf8, 0x0c, 0x0c, 0xcc, 0x78, 0x00 },	// ASCII code 53
+  { 0x38, 0x60, 0xc0, 0xf8, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 54
+  { 0xfc, 0xcc, 0x0c, 0x18, 0x30, 0x60, 0x60, 0x00 },	// ASCII code 55
+  { 0x78, 0xcc, 0xcc, 0x78, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 56
+  { 0x78, 0xcc, 0xcc, 0x7c, 0x0c, 0x18, 0x70, 0x00 },	// ASCII code 57
+  { 0x00, 0x00, 0x30, 0x30, 0x00, 0x30, 0x30, 0x00 },	// ASCII code 58
+  { 0x00, 0x00, 0x30, 0x30, 0x00, 0x70, 0x30, 0x60 },	// ASCII code 59
+  { 0x18, 0x30, 0x60, 0xc0, 0x60, 0x30, 0x18, 0x00 },	// ASCII code 60
+  { 0x00, 0x00, 0xfc, 0x00, 0xfc, 0x00, 0x00, 0x00 },	// ASCII code 61
+  { 0x60, 0x30, 0x18, 0x0c, 0x18, 0x30, 0x60, 0x00 },	// ASCII code 62
+  { 0x78, 0xcc, 0x0c, 0x18, 0x30, 0x00, 0x30, 0x00 },	// ASCII code 63
+  { 0x7c, 0xc6, 0xde, 0xde, 0xde, 0xc0, 0x78, 0x00 },	// ASCII code 64
+  { 0x30, 0x78, 0xcc, 0xcc, 0xfc, 0xcc, 0xcc, 0x00 },	// ASCII code 65
+  { 0xfc, 0x66, 0x66, 0x7c, 0x66, 0x66, 0xfc, 0x00 },	// ASCII code 66
+  { 0x3c, 0x66, 0xc0, 0xc0, 0xc0, 0x66, 0x3c, 0x00 },	// ASCII code 67
+  { 0xfc, 0x6c, 0x66, 0x66, 0x66, 0x6c, 0xfc, 0x00 },	// ASCII code 68
+  { 0xfe, 0x62, 0x68, 0x78, 0x68, 0x62, 0xfe, 0x00 },	// ASCII code 69
+  { 0xfe, 0x62, 0x68, 0x78, 0x68, 0x60, 0xf0, 0x00 },	// ASCII code 70
+  { 0x3c, 0x66, 0xc0, 0xc0, 0xce, 0x66, 0x3e, 0x00 },	// ASCII code 71
+  { 0xcc, 0xcc, 0xcc, 0xfc, 0xcc, 0xcc, 0xcc, 0x00 },	// ASCII code 72
+  { 0x78, 0x30, 0x30, 0x30, 0x30, 0x30, 0x78, 0x00 },	// ASCII code 73
+  { 0x1e, 0x0c, 0x0c, 0x0c, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 74
+  { 0xe6, 0x66, 0x6c, 0x78, 0x6c, 0x66, 0xe6, 0x00 },	// ASCII code 75
+  { 0xf0, 0x60, 0x60, 0x60, 0x62, 0x66, 0xfe, 0x00 },	// ASCII code 76
+  { 0xc6, 0xee, 0xfe, 0xd6, 0xc6, 0xc6, 0xc6, 0x00 },	// ASCII code 77
+  { 0xc6, 0xe6, 0xf6, 0xde, 0xce, 0xc6, 0xc6, 0x00 },	// ASCII code 78
+  { 0x38, 0x6c, 0xc6, 0xc6, 0xc6, 0x6c, 0x38, 0x00 },	// ASCII code 79
+  { 0xfc, 0x66, 0x66, 0x7c, 0x60, 0x60, 0xf0, 0x00 },	// ASCII code 80
+  { 0x78, 0xcc, 0xcc, 0xcc, 0xdc, 0x78, 0x1c, 0x00 },	// ASCII code 81
+  { 0xfc, 0x66, 0x66, 0x7c, 0x78, 0x6c, 0xe6, 0x00 },	// ASCII code 82
+  { 0x78, 0xcc, 0xe0, 0x38, 0x1c, 0xcc, 0x78, 0x00 },	// ASCII code 83
+  { 0xfc, 0xb4, 0x30, 0x30, 0x30, 0x30, 0x78, 0x00 },	// ASCII code 84
+  { 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xfc, 0x00 },	// ASCII code 85
+  { 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x78, 0x30, 0x00 },	// ASCII code 86
+  { 0xc6, 0xc6, 0xc6, 0xd6, 0xfe, 0xee, 0xc6, 0x00 },	// ASCII code 87
+  { 0xc6, 0xc6, 0x6c, 0x38, 0x6c, 0xc6, 0xc6, 0x00 },	// ASCII code 88
+  { 0xcc, 0xcc, 0xcc, 0x78, 0x30, 0x30, 0x78, 0x00 },	// ASCII code 89
+  { 0xfe, 0xcc, 0x98, 0x30, 0x62, 0xc6, 0xfe, 0x00 },	// ASCII code 90
+  { 0x78, 0x60, 0x60, 0x60, 0x60, 0x60, 0x78, 0x00 },	// ASCII code 91
+  { 0xc0, 0x60, 0x30, 0x18, 0x0c, 0x06, 0x02, 0x00 },	// ASCII code 92
+  { 0x78, 0x18, 0x18, 0x18, 0x18, 0x18, 0x78, 0x00 },	// ASCII code 93
+  { 0x10, 0x38, 0x6c, 0xc6, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 94
+  { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff },	// ASCII code 95
+  { 0x30, 0x30, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 96
+  { 0x00, 0x00, 0x78, 0x0c, 0x7c, 0xcc, 0x76, 0x00 },	// ASCII code 97
+  { 0xe0, 0x60, 0x7c, 0x66, 0x66, 0x66, 0xbc, 0x00 },	// ASCII code 98
+  { 0x00, 0x00, 0x78, 0xcc, 0xc0, 0xcc, 0x78, 0x00 },	// ASCII code 99
+  { 0x1c, 0x0c, 0x0c, 0x7c, 0xcc, 0xcc, 0x76, 0x00 },	// ASCII code 100
+  { 0x00, 0x00, 0x78, 0xcc, 0xfc, 0xc0, 0x78, 0x00 },	// ASCII code 101
+  { 0x38, 0x6c, 0x60, 0xf0, 0x60, 0x60, 0xf0, 0x00 },	// ASCII code 102
+  { 0x00, 0x00, 0x76, 0xcc, 0xcc, 0x7c, 0x0c, 0xf8 },	// ASCII code 103
+  { 0xe0, 0x60, 0x6c, 0x76, 0x66, 0x66, 0xe6, 0x00 },	// ASCII code 104
+  { 0x30, 0x00, 0x70, 0x30, 0x30, 0x30, 0x78, 0x00 },	// ASCII code 105
+  { 0x18, 0x00, 0x78, 0x18, 0x18, 0x18, 0xd8, 0x70 },	// ASCII code 106
+  { 0xe0, 0x60, 0x66, 0x6c, 0x78, 0x6c, 0xe6, 0x00 },	// ASCII code 107
+  { 0x70, 0x30, 0x30, 0x30, 0x30, 0x30, 0x78, 0x00 },	// ASCII code 108
+  { 0x00, 0x00, 0xec, 0xfe, 0xd6, 0xc6, 0xc6, 0x00 },	// ASCII code 109
+  { 0x00, 0x00, 0xf8, 0xcc, 0xcc, 0xcc, 0xcc, 0x00 },	// ASCII code 110
+  { 0x00, 0x00, 0x78, 0xcc, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 111
+  { 0x00, 0x00, 0xdc, 0x66, 0x66, 0x7c, 0x60, 0xf0 },	// ASCII code 112
+  { 0x00, 0x00, 0x76, 0xcc, 0xcc, 0x7c, 0x0c, 0x1e },	// ASCII code 113
+  { 0x00, 0x00, 0xd8, 0x6c, 0x6c, 0x60, 0xf0, 0x00 },	// ASCII code 114
+  { 0x00, 0x00, 0x7c, 0xc0, 0x78, 0x0c, 0xf8, 0x00 },	// ASCII code 115
+  { 0x10, 0x30, 0x7c, 0x30, 0x30, 0x34, 0x18, 0x00 },	// ASCII code 116
+  { 0x00, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x76, 0x00 },	// ASCII code 117
+  { 0x00, 0x00, 0xcc, 0xcc, 0xcc, 0x78, 0x30, 0x00 },	// ASCII code 118
+  { 0x00, 0x00, 0xc6, 0xc6, 0xd6, 0xfe, 0x6c, 0x00 },	// ASCII code 119
+  { 0x00, 0x00, 0xc6, 0x6c, 0x38, 0x6c, 0xc6, 0x00 },	// ASCII code 120
+  { 0x00, 0x00, 0xcc, 0xcc, 0xcc, 0x7c, 0x0c, 0xf8 },	// ASCII code 121
+  { 0x00, 0x00, 0xfc, 0x98, 0x30, 0x64, 0xfc, 0x00 },	// ASCII code 122
+  { 0x1c, 0x30, 0x30, 0xe0, 0x30, 0x30, 0x1c, 0x00 },	// ASCII code 123
+  { 0x18, 0x18, 0x18, 0x00, 0x18, 0x18, 0x18, 0x00 },	// ASCII code 124
+  { 0xe0, 0x30, 0x30, 0x1c, 0x30, 0x30, 0xe0, 0x00 },	// ASCII code 125
+  { 0x76, 0xdc, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 126
+  { 0x10, 0x38, 0x6c, 0xc6, 0xc6, 0xc6, 0xfe, 0x00 },	// ASCII code 127
+  { 0x78, 0xcc, 0xc0, 0xcc, 0x78, 0x18, 0x0c, 0x78 },	// ASCII code 128
+  { 0x00, 0xcc, 0x00, 0xcc, 0xcc, 0xcc, 0x7e, 0x00 },	// ASCII code 129
+  { 0x1c, 0x00, 0x78, 0xcc, 0xfc, 0xc0, 0x78, 0x00 },	// ASCII code 130
+  { 0x7e, 0xc3, 0x3c, 0x06, 0x3e, 0x66, 0x3f, 0x00 },	// ASCII code 131
+  { 0xcc, 0x00, 0x78, 0x0c, 0x7c, 0xcc, 0x7e, 0x00 },	// ASCII code 132
+  { 0xe0, 0x00, 0x78, 0x0c, 0x7c, 0xcc, 0x7e, 0x00 },	// ASCII code 133
+  { 0x30, 0x30, 0x78, 0x0c, 0x7c, 0xcc, 0x7e, 0x00 },	// ASCII code 134
+  { 0x00, 0x00, 0x7c, 0xc0, 0xc0, 0x7c, 0x06, 0x3c },	// ASCII code 135
+  { 0x7e, 0xc3, 0x3c, 0x66, 0x7e, 0x60, 0x3c, 0x00 },	// ASCII code 136
+  { 0xcc, 0x00, 0x78, 0xcc, 0xfc, 0xc0, 0x78, 0x00 },	// ASCII code 137
+  { 0xe0, 0x00, 0x78, 0xcc, 0xfc, 0xc0, 0x78, 0x00 },	// ASCII code 138
+  { 0xcc, 0x00, 0x70, 0x30, 0x30, 0x30, 0x78, 0x00 },	// ASCII code 139
+  { 0x7c, 0xc6, 0x38, 0x18, 0x18, 0x18, 0x3c, 0x00 },	// ASCII code 140
+  { 0xe0, 0x00, 0x70, 0x30, 0x30, 0x30, 0x78, 0x00 },	// ASCII code 141
+  { 0xcc, 0x30, 0x78, 0xcc, 0xcc, 0xfc, 0xcc, 0x00 },	// ASCII code 142
+  { 0x30, 0x30, 0x00, 0x78, 0xcc, 0xfc, 0xcc, 0x00 },	// ASCII code 143
+  { 0x1c, 0x00, 0xfc, 0x60, 0x78, 0x60, 0xfc, 0x00 },	// ASCII code 144
+  { 0x00, 0x00, 0x7f, 0x0c, 0x7f, 0xcc, 0x7f, 0x00 },	// ASCII code 145
+  { 0x3e, 0x6c, 0xcc, 0xfe, 0xcc, 0xcc, 0xce, 0x00 },	// ASCII code 146
+  { 0x78, 0xcc, 0x00, 0x78, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 147
+  { 0x00, 0xcc, 0x00, 0x78, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 148
+  { 0x00, 0xe0, 0x00, 0x78, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 149
+  { 0x78, 0xcc, 0x00, 0xcc, 0xcc, 0xcc, 0x7e, 0x00 },	// ASCII code 150
+  { 0x00, 0xe0, 0x00, 0xcc, 0xcc, 0xcc, 0x7e, 0x00 },	// ASCII code 151
+  { 0x00, 0xcc, 0x00, 0xcc, 0xcc, 0xfc, 0x0c, 0xf8 },	// ASCII code 152
+  { 0xc6, 0x38, 0x7c, 0xc6, 0xc6, 0x7c, 0x38, 0x00 },	// ASCII code 153
+  { 0xcc, 0x00, 0xcc, 0xcc, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 154
+  { 0x18, 0x18, 0x7e, 0xc0, 0xc0, 0x7e, 0x18, 0x18 },	// ASCII code 155
+  { 0x38, 0x6c, 0x64, 0xf0, 0x60, 0xe6, 0xfc, 0x00 },	// ASCII code 156
+  { 0xcc, 0xcc, 0x78, 0xfc, 0x30, 0xfc, 0x30, 0x00 },	// ASCII code 157
+  { 0xf0, 0xd8, 0xd8, 0xf4, 0xcc, 0xde, 0xcc, 0x0e },	// ASCII code 158
+  { 0x0e, 0x1b, 0x18, 0x7e, 0x18, 0x18, 0xd8, 0x70 },	// ASCII code 159
+  { 0x1c, 0x00, 0x78, 0x0c, 0x7c, 0xcc, 0x7e, 0x00 },	// ASCII code 160
+  { 0x38, 0x00, 0x70, 0x30, 0x30, 0x30, 0x78, 0x00 },	// ASCII code 161
+  { 0x00, 0x1c, 0x00, 0x78, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 162
+  { 0x00, 0x1c, 0x00, 0xcc, 0xcc, 0xcc, 0x7e, 0x00 },	// ASCII code 163
+  { 0x00, 0xf8, 0x00, 0xf8, 0xcc, 0xcc, 0xcc, 0x00 },	// ASCII code 164
+  { 0xfc, 0x00, 0xcc, 0xec, 0xfc, 0xdc, 0xcc, 0x00 },	// ASCII code 165
+  { 0x3c, 0x6c, 0x6c, 0x3e, 0x00, 0x7e, 0x00, 0x00 },	// ASCII code 166
+  { 0x3c, 0x66, 0x66, 0x3c, 0x00, 0x7e, 0x00, 0x00 },	// ASCII code 167
+  { 0x30, 0x00, 0x30, 0x60, 0xc0, 0xcc, 0x78, 0x00 },	// ASCII code 168
+  { 0x00, 0x00, 0x00, 0xfc, 0xc0, 0xc0, 0x00, 0x00 },	// ASCII code 169
+  { 0x00, 0x00, 0x00, 0xfc, 0x0c, 0x0c, 0x00, 0x00 },	// ASCII code 170
+  { 0xc6, 0xcc, 0xd8, 0x3e, 0x63, 0xce, 0x98, 0x1f },	// ASCII code 171
+  { 0xc6, 0xcc, 0xd8, 0xf3, 0x67, 0xcf, 0x9f, 0x03 },	// ASCII code 172
+  { 0x00, 0x18, 0x00, 0x18, 0x18, 0x3c, 0x3c, 0x18 },	// ASCII code 173
+  { 0x00, 0x33, 0x66, 0xcc, 0x66, 0x33, 0x00, 0x00 },	// ASCII code 174
+  { 0x00, 0xcc, 0x66, 0x33, 0x66, 0xcc, 0x00, 0x00 },	// ASCII code 175
+  { 0x22, 0x88, 0x22, 0x88, 0x22, 0x88, 0x22, 0x88 },	// ASCII code 176
+  { 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa },	// ASCII code 177
+  { 0xdd, 0x77, 0xdd, 0x77, 0xdd, 0x77, 0xdd, 0x77 },	// ASCII code 178
+  { 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18 },	// ASCII code 179
+  { 0x18, 0x18, 0x18, 0x18, 0xf8, 0x18, 0x18, 0x18 },	// ASCII code 180
+  { 0x18, 0x18, 0xf8, 0x18, 0xf8, 0x18, 0x18, 0x18 },	// ASCII code 181
+  { 0x36, 0x36, 0x36, 0x36, 0xf6, 0x36, 0x36, 0x36 },	// ASCII code 182
+  { 0x00, 0x00, 0x00, 0x00, 0xfe, 0x36, 0x36, 0x36 },	// ASCII code 183
+  { 0x00, 0x00, 0xf8, 0x18, 0xf8, 0x18, 0x18, 0x18 },	// ASCII code 184
+  { 0x36, 0x36, 0xf6, 0x06, 0xf6, 0x36, 0x36, 0x36 },	// ASCII code 185
+  { 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36 },	// ASCII code 186
+  { 0x00, 0x00, 0xfe, 0x06, 0xf6, 0x36, 0x36, 0x36 },	// ASCII code 187
+  { 0x36, 0x36, 0xf6, 0x06, 0xfe, 0x00, 0x00, 0x00 },	// ASCII code 188
+  { 0x36, 0x36, 0x36, 0x36, 0xfe, 0x00, 0x00, 0x00 },	// ASCII code 189
+  { 0x18, 0x18, 0xf8, 0x18, 0xf8, 0x00, 0x00, 0x00 },	// ASCII code 190
+  { 0x00, 0x00, 0x00, 0x00, 0xf8, 0x18, 0x18, 0x18 },	// ASCII code 191
+  { 0x18, 0x18, 0x18, 0x18, 0x1f, 0x00, 0x00, 0x00 },	// ASCII code 192
+  { 0x18, 0x18, 0x18, 0x18, 0xff, 0x00, 0x00, 0x00 },	// ASCII code 193
+  { 0x00, 0x00, 0x00, 0x00, 0xff, 0x18, 0x18, 0x18 },	// ASCII code 194
+  { 0x18, 0x18, 0x18, 0x18, 0x1f, 0x18, 0x18, 0x18 },	// ASCII code 195
+  { 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00 },	// ASCII code 196
+  { 0x18, 0x18, 0x18, 0x18, 0xff, 0x18, 0x18, 0x18 },	// ASCII code 197
+  { 0x18, 0x18, 0x1f, 0x18, 0x1f, 0x18, 0x18, 0x18 },	// ASCII code 198
+  { 0x36, 0x36, 0x36, 0x36, 0x37, 0x36, 0x36, 0x36 },	// ASCII code 199
+  { 0x36, 0x36, 0x37, 0x30, 0x3f, 0x00, 0x00, 0x00 },	// ASCII code 200
+  { 0x00, 0x00, 0x3f, 0x30, 0x37, 0x36, 0x36, 0x36 },	// ASCII code 201
+  { 0x36, 0x36, 0xf7, 0x00, 0xff, 0x00, 0x00, 0x00 },	// ASCII code 202
+  { 0x00, 0x00, 0xff, 0x00, 0xf7, 0x36, 0x36, 0x36 },	// ASCII code 203
+  { 0x36, 0x36, 0x37, 0x30, 0x37, 0x36, 0x36, 0x36 },	// ASCII code 204
+  { 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0x00 },	// ASCII code 205
+  { 0x36, 0x36, 0xf7, 0x00, 0xf7, 0x36, 0x36, 0x36 },	// ASCII code 206
+  { 0x18, 0x18, 0xff, 0x00, 0xff, 0x00, 0x00, 0x00 },	// ASCII code 207
+  { 0x36, 0x36, 0x36, 0x36, 0xff, 0x00, 0x00, 0x00 },	// ASCII code 208
+  { 0x00, 0x00, 0xff, 0x00, 0xff, 0x18, 0x18, 0x18 },	// ASCII code 209
+  { 0x00, 0x00, 0x00, 0x00, 0xff, 0x36, 0x36, 0x36 },	// ASCII code 210
+  { 0x36, 0x36, 0x36, 0x36, 0x3f, 0x00, 0x00, 0x00 },	// ASCII code 211
+  { 0x18, 0x18, 0x1f, 0x18, 0x1f, 0x00, 0x00, 0x00 },	// ASCII code 212
+  { 0x00, 0x00, 0x1f, 0x18, 0x1f, 0x18, 0x18, 0x18 },	// ASCII code 213
+  { 0x00, 0x00, 0x00, 0x00, 0x3f, 0x36, 0x36, 0x36 },	// ASCII code 214
+  { 0x36, 0x36, 0x36, 0x36, 0xf7, 0x36, 0x36, 0x36 },	// ASCII code 215
+  { 0x18, 0x18, 0xff, 0x00, 0xff, 0x18, 0x18, 0x18 },	// ASCII code 216
+  { 0x18, 0x18, 0x18, 0x18, 0xf8, 0x00, 0x00, 0x00 },	// ASCII code 217
+  { 0x00, 0x00, 0x00, 0x00, 0x1f, 0x18, 0x18, 0x18 },	// ASCII code 218
+  { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },	// ASCII code 219
+  { 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff },	// ASCII code 220
+  { 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0 },	// ASCII code 221
+  { 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f },	// ASCII code 222
+  { 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 223
+  { 0x00, 0x00, 0x76, 0xdc, 0xc8, 0xdc, 0x76, 0x00 },	// ASCII code 224
+  { 0x00, 0x78, 0xcc, 0xf8, 0xcc, 0xf8, 0xc0, 0xc0 },	// ASCII code 225
+  { 0x00, 0xfe, 0xc6, 0xc0, 0xc0, 0xc0, 0xc0, 0x00 },	// ASCII code 226
+  { 0x00, 0xfe, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x00 },	// ASCII code 227
+  { 0xfe, 0x66, 0x30, 0x18, 0x30, 0x66, 0xfe, 0x00 },	// ASCII code 228
+  { 0x00, 0x00, 0x7e, 0xcc, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 229
+  { 0x00, 0x66, 0x66, 0x66, 0x66, 0x7c, 0x60, 0xc0 },	// ASCII code 230
+  { 0x00, 0x76, 0xdc, 0x18, 0x18, 0x18, 0x18, 0x00 },	// ASCII code 231
+  { 0xfc, 0x30, 0x78, 0xcc, 0xcc, 0x78, 0x30, 0xfc },	// ASCII code 232
+  { 0x38, 0x6c, 0xc6, 0xfe, 0xc6, 0x6c, 0x38, 0x00 },	// ASCII code 233
+  { 0x38, 0x6c, 0xc6, 0xc6, 0x6c, 0x6c, 0xee, 0x00 },	// ASCII code 234
+  { 0x1c, 0x30, 0x18, 0x7c, 0xcc, 0xcc, 0x78, 0x00 },	// ASCII code 235
+  { 0x00, 0x00, 0x7e, 0xdb, 0xdb, 0x7e, 0x00, 0x00 },	// ASCII code 236
+  { 0x06, 0x0c, 0x7e, 0xdb, 0xdb, 0x7e, 0x60, 0xc0 },	// ASCII code 237
+  { 0x3c, 0x60, 0xc0, 0xfc, 0xc0, 0x60, 0x3c, 0x00 },	// ASCII code 238
+  { 0x78, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x00 },	// ASCII code 239
+  { 0x00, 0xfc, 0x00, 0xfc, 0x00, 0xfc, 0x00, 0x00 },	// ASCII code 240
+  { 0x30, 0x30, 0xfc, 0x30, 0x30, 0x00, 0xfc, 0x00 },	// ASCII code 241
+  { 0x60, 0x30, 0x18, 0x30, 0x60, 0x00, 0xfc, 0x00 },	// ASCII code 242
+  { 0x18, 0x30, 0x60, 0x30, 0x18, 0x00, 0xfc, 0x00 },	// ASCII code 243
+  { 0x0e, 0x1b, 0x1b, 0x18, 0x18, 0x18, 0x18, 0x18 },	// ASCII code 244
+  { 0x18, 0x18, 0x18, 0x18, 0x18, 0xd8, 0xd8, 0x70 },	// ASCII code 245
+  { 0x30, 0x30, 0x00, 0xfc, 0x00, 0x30, 0x30, 0x00 },	// ASCII code 246
+  { 0x00, 0x72, 0x9c, 0x00, 0x72, 0x9c, 0x00, 0x00 },	// ASCII code 247
+  { 0x38, 0x6c, 0x6c, 0x38, 0x00, 0x00, 0x00, 0x00 },	// ASCII code 248
+  { 0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x00 },	// ASCII code 249
+  { 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00 },	// ASCII code 250
+  { 0x0f, 0x0c, 0x0c, 0x0c, 0xec, 0x6c, 0x3c, 0x1c },	// ASCII code 251
+  { 0x78, 0x6c, 0x6c, 0x6c, 0x6c, 0x00, 0x00, 0x00 },	// ASCII code 252
+  { 0x78, 0x0c, 0x38, 0x60, 0x7c, 0x00, 0x00, 0x00 },	// ASCII code 253
+  { 0x00, 0x00, 0x3c, 0x3c, 0x3c, 0x3c, 0x00, 0x00 },	// ASCII code 254
+  { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }	// ASCII code 255
+ };      
+    </code>
+  </pre>
+  
+  <h3>main.c</h3>
+  <pre>
+    <code>
+#include "gba1.h"
+#define CURRENT_TIME *((unsigned short *)0x0400010C)
+
+extern hword image_start[];		// 画像データがある先頭アドレスを定義
+
+/* プロトタイプ宣言 */
+void display_time(hword val);
+void init_timer(void);
+void key_action(void);
+void draw_character(hword color);
+void draw_enemy(hword color);
+void draw_stage1(void);
+void draw_stage2(void);
+void print_8bitdot(hword color);
+void stage_locate(hword cx, hword cy); //8bitごとの位置に変換
+int mode_up(void);
+int mode_right(void);
+int mode_left(void);
+int mode_down(void);
+int enemy_up(void);
+int enemy_right(void);
+int enemy_left(void);
+int enemy_down(void);
+void display_life(hword life, hword muteki);
+void item_prints(void);
+void gameover(hword life);
+void gameclear(hword score);
+void get_item(hword item_x, hword item_y);
+void reset_prints(void);
+void get_cake(void);
+void move_enemy(void);
+void damage(void);
+void muteki_mode(void);
+
+hword RED,BLACK,BLUE,YELLOW,BROWN,CYAN,MAGENTA,WHITE,GREEN;
+hword screen,life,score,item,muteki,mutekimode,color,kabe1,kabe2;
+
+point character;
+point stagedot;
+point item1;
+point item2;
+point item3;
+point item4;
+point enemy;
+
+
+unsigned char character2[8] = {
+		0x3C,
+		0x7E,
+		0xEB,
+		0xEB,
+		0xFF,
+		0xE3,
+		0x7E,
+		0x3C
+};
+
+
+/*ステージの構成*/
+unsigned int stage1[21] = {
+		0x3FF,
+		0x201,
+		0x2DD,
+		0x200,
+		0x2D7,
+		0x211,
+		0x3DD,
+		0x050,
+		0x057,
+		0x004,
+		0x057,
+		0x050,
+		0x3D7,
+		0x201,
+		0x2DD,
+		0x240,
+		0x357,
+		0x211,
+		0x2FD,
+		0x200,
+};
+
+/*チョコレートの描画用配列*/
+unsigned char choco[8][8] = {
+	{ 0, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 2, 2, 3, 3, 2, 2, 0 },
+	{ 0, 2, 2, 3, 3, 2, 2, 0 },
+	{ 0, 2, 2, 2, 2, 2, 2, 0 },
+	{ 0, 2, 2, 3, 3, 2, 2, 0 },
+	{ 0, 2, 2, 3, 3, 2, 2, 0 }
+};
+
+/*アイスの描画用配列*/
+unsigned char ice[8][8] = {
+	{ 0, 0, 0, 0, 1, 0, 0, 0 },
+	{ 0, 0, 0, 1, 1, 1, 0, 0 },
+	{ 0, 0, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1 },
+	{ 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 0, 0 },
+	{ 0, 2, 1, 1, 1, 0, 0, 0 },
+	{ 2, 0, 0, 1, 0, 0, 0, 0 }
+};
+
+/*ドーナツの描画用配列*/
+unsigned char donut[8][8] = {
+	{ 0, 0, 1, 1, 1, 1, 0, 0 },
+	{ 0, 1, 1, 3, 1, 2, 1, 0 },
+	{ 1, 3, 1, 1, 1, 1, 1, 1 },
+	{ 1, 4, 1, 0, 0, 1, 4, 1 },
+	{ 2, 1, 1, 0, 0, 1, 1, 1 },
+	{ 1, 1, 1, 1, 1, 1, 1, 1 },
+	{ 0, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 0, 1, 1, 1, 1, 0, 0 }
+};
+
+/*紅茶の描画用配列*/
+unsigned char tea[8][8] = {
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 3, 3, 3, 3, 0, 0, 0 },
+	{ 3, 2, 2, 2, 2, 3, 1, 1 },
+	{ 1, 3, 3, 3, 3, 1, 0, 1 },
+	{ 1, 1, 1, 1, 1, 1, 1, 1 },
+	{ 0, 1, 1, 1, 1, 0, 0, 0 },
+	{ 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+/*ケーキの描画用配列*/
+unsigned char cake[8][8] = {
+	{ 0, 0, 0, 0, 0, 2, 0, 0 },
+	{ 0, 0, 0, 0, 2, 2, 2, 0 },
+	{ 0, 0, 0, 0, 2, 2, 2, 0 },
+	{ 1, 1, 1, 1, 1, 1, 1, 1 },
+	{ 3, 3, 2, 3, 3, 3, 2, 3 },
+	{ 2, 3, 3, 3, 2, 3, 3, 3 },
+	{ 1, 1, 1, 1, 1, 1, 1, 1 },
+	{ 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+
+int main(void) {
+
+	RED = BGR(0x1F, 0, 0);			//赤色の設定
+	BLUE = BGR(0, 0, 0x1F);			//青色の設定
+	BLACK = BGR(0, 0, 0);			//黒色の設定
+	YELLOW = BGR(0x1F, 0x1F, 0);	//黄色の設定
+	BROWN = BGR(0x10, 0x09, 0x05);	//茶色の設定
+	CYAN = BGR(0, 0x1F, 0x1F);		//シアンの設定
+	MAGENTA = BGR(0x1F, 0, 0x1F);	//マゼンタの設定
+	WHITE = BGR(0x1F, 0x1F, 0x1F);	//白色の設定
+	GREEN = BGR(0,0x1F,0);			//緑色の設定
+	
+	
+	screen = 0;		//タイトルの時0,取説の時1,ゲームの時2
+	/* 画面初期化 */
+	*((hword *)IOBASE) = 0xF03;
+
+	
+	while (1) {
+		/*画面リセット*/
+		hword i, j;
+		for (i = 0; i < 160; i++) {
+			for (j = 0; j < 240; j++) {
+				draw_point(j, i, BLACK);
+			}
+		}
+		/*タイトルモード*/
+		while (screen == 0) {
+			locate(8, 7);
+			prints("FOOD FIGTHTERS");
+			locate(8, 10);
+			prints("PRESS A(Z): START");
+			locate(6, 11);
+			prints("PRESS UP: HOW TO PLAY");
+			hword* key, check;
+			key = (hword*)0x04000130;
+			check = ~*key & KEY_ALL;
+			if (check == KEY_UP) {		//↑で取説
+				screen = 1;
+			}
+			else if (check == KEY_A) {	//Aでゲームスタート
+				screen = 2;
+			}
+		}
+
+		/*画面リセット*/
+		for (i = 0; i < 160; i++) {
+			for (j = 0; j < 240; j++) {
+				draw_point(j, i, BLACK);
+			}
+		}
+		/* 取説モード起動　*/
+		while (screen == 1) {
+			locate(0,0);
+			prints("Red face is YOU.");
+			locate(0, 1);
+			prints("Cyan face is ENEMY.");
+			locate(0, 2);
+			prints("You have 3 LIFE at first.");
+			locate(0, 3);
+			prints("Up to 3 life you can keep.");
+			locate(0, 4);
+			prints("When you bump into the enemy");
+			locate(0, 5);
+			prints("1 life and score disapears.");
+			locate(0, 6);
+			prints("When you eat the ccake");
+			locate(0, 7);
+			prints("you can get 1 life.");
+			locate(0, 8);
+			prints("If you lost all life");
+			locate(0, 9);
+			prints("GAME OVER.");
+			locate(0,10);
+			prints("When you eat sweets");
+			locate(0,11);
+			prints("You can get score.");
+			locate(0,12);
+			prints("If you get 100 score");
+			locate(0, 13);
+			prints("GAME CLEAR.");
+			locate(0, 14);
+			prints("When you press B(X)");
+			locate(0, 15);
+			prints("You become faster. ");
+			locate(0, 16);
+			prints("After you eat cake and press A");
+			locate(0, 17);
+			prints("you escape to suffer damage.");
+			locate(0, 18);
+			prints("(while 10sec)");
+			locate(16, 19);
+			prints("PRESS B: BACK");
+
+			hword* key, check;
+			key = (hword*)0x04000130;
+			check = ~*key & KEY_ALL;
+			if (check == KEY_B) {		//Bボタンでタイトルに戻る
+				screen = 0;
+				hword i, j;
+				for (i = 0; i < 160; i++) {
+					for (j = 0; j < 240; j++) {
+						draw_point(j, i, BLACK);
+					}
+				}
+			}
+		}
+		/* 画面や各種変数の初期設定　*/
+		if (screen == 2) {
+			character.x = 76;				//プレイヤーキャラの初期位置x
+			character.y = 120;				//プレイヤーキャラの初期位置y
+			life = 3;						//残機の初期値３
+			score = 0;						//得点
+			item = 0;						//取得アイテム数
+			muteki = 0;						//無敵モードが使えるならば1にする
+			mutekimode = 0;					//無敵モードならば1にする
+			color = RED;					//プレイヤーキャラの色設定（平常時は赤）
+			kabe1 = 0;						//敵の挙動制御用変数1
+			kabe2 = 0;						//敵の挙動制御用変数2
+
+
+			//アイテムや敵の初期値
+			item1.x = 1;
+			item1.y = 1;
+			item2.x = 4;
+			item2.y = 17;
+			item3.x = 15;
+			item3.y = 13;
+			item4.x = 11;
+			item4.y = 5;
+			enemy.x = 96;
+			enemy.y = 8;
+			draw_stage1();
+			draw_stage2();
+
+			locate(21, 4);
+			prints("score:");
+		}
+		/* ゲームモード起動　*/
+		while (screen == 2) {
+			key_action();		//プレイヤーの操作
+			move_enemy();		//敵の行動制御
+			locate(25, 0);		//表示位置設定
+			display_life(life, muteki);	//残り体力と無敵モードの有無を確かめる表示を出す
+			get_item(item1.x, item1.y);	//お菓子の取得を判別しスコアの加算をする
+			get_item(item2.x, item2.y);	//同上
+			get_item(item3.x, item3.y); //同上
+			get_item(item4.x, item4.y); //同上
+			gameover(life);				//残り体力を見てゲームオーバーか判定をする
+			gameclear(score);			//スコアを見てゲームクリアか判定する
+			locate(27, 4);				//表示位置設定
+			printn(score);				//得点の描画
+			item_prints();				//アイテムを描画する
+			muteki_mode();				//無敵モードへの変更用関数
+			if (mutekimode == 0) {		//無敵時はこの処理を飛ばす
+				damage();				//敵との接触時の処理
+			}
+			//お菓子を4つ集めた時の処理
+			if (item == 4) {
+				reset_prints();			//リセット用お菓子のケーキを出現させる
+				get_cake();				//ケーキを食べた時の処理
+
+			}
+		}
+	}
+}
+
+void init_timer(void) {
+
+	/* タイマ制御レジスタ */
+	*((hword *)0x04000100) = 0xFFFF - 1678 + 1;
+	*((hword *)0x04000104) = 0xFFFF - 10 + 1;
+	*((hword *)0x04000108) = 0xFFFF - 10 + 1;
+	*((hword *)0x0400010C) = 0x0000;
+
+	/* タイマ設定レジスタ */
+	*((hword *)0x04000102) = 0x0000;	// 初期状態でタイマ停止
+	*((hword *)0x04000106) = 0x0084;	// カスケード接続
+	*((hword *)0x0400010A) = 0x0084;	// カスケード接続
+	*((hword *)0x0400010E) = 0x0084;	// カスケード接続
+}
+
+
+void display_time(hword val) {
+	
+	byte char_data[] = "0123456789";
+	byte buf[6];
+	hword tmp;
+	int i;
+	
+	/* 入力値valの桁数(i+1)設定 (i=3の場合4桁表示)*/
+	i = 3;
+
+	/* 文字列の最後にNULLコード挿入 */
+	buf[i+1] = 0;
+	
+	/* 最下位桁の文字（10で割った余り）を挿入し，入力値を10で割る */
+	for(; i >= 0; i--) {
+		buf[i] = char_data[mod(val, 10)];
+		val = div(val, 10);
+	}
+	
+	/* 文字列全体を表示 */
+	prints(buf);
+	
+	return;
+}
+
+void key_action(void) {
+	hword *key,check1,check2,check3,check4,check5;
+	int n,o;
+
+	/*キー入力判定*/
+	key = (hword*)0x04000130;
+	check1 = ~*key & KEY_RIGHT;
+	check2 = ~*key & KEY_LEFT;
+	check3 = ~*key & KEY_UP;
+	check4 = ~*key & KEY_DOWN;
+	check5 = ~*key & KEY_B;
+
+	if (check1 == KEY_RIGHT) {		//右キー入力時の移動
+		o = mode_right();			//右に壁があるかの判定
+		if (o != 1) {
+			if (character.x == 150) {		//右端についたら左にワープする
+				draw_character(BLACK);		//元居た位置を塗りつぶす
+				character.x = 0;			//プレイヤーの座標変更
+			}
+			else {
+				draw_character(BLACK);
+				character.x++; //
+				o = mode_right();				//右に壁があるかの判定
+				if (character.x == 150) {		//右端についたら左にワープする
+					draw_character(BLACK);		//元居た位置を塗りつぶす
+					character.x = 0;			//プレイヤーの座標変更
+				}
+				if (check5 == KEY_B && o != 1) {	//
+					character.x++;					//プレイヤーの座標変更
+					o = mode_right();				//右に壁があるかの判定
+					if (character.x == 150) {		//右端についたら左にワープする
+						draw_character(BLACK);		//元居た位置を塗りつぶす
+						character.x = 0;			//プレイヤーの座標変更
+					}
+					if (o != 1) {
+						character.x++;				//プレイヤーの座標変更
+					}
+				}
+			}
+		}
+	}
+	if (check2 == KEY_LEFT) {		//左キー入力時の移動
+		o = mode_left();			//左に壁があるかの判定
+		if (o != 1) {
+			if (character.x == 0) {				//左端についたら右にワープする
+				draw_character(BLACK);			//元居た位置を塗りつぶす
+				character.x = 150;				//プレイヤーの座標変更
+			}
+			else {
+				draw_character(BLACK);			//元居た位置を塗りつぶす
+				character.x--;					//プレイヤーの座標変更
+				o = mode_left();
+				if (character.x == 0) {			//左端についたら右にワープする
+					draw_character(BLACK);		//元居た位置を塗りつぶす
+					character.x = 150;			//プレイヤーの座標変更
+				}
+				if (check5 == KEY_B && o != 1) {
+					character.x--;				//プレイヤーの座標変更
+					o = mode_left();
+					if (character.x == 0) {		//左端についたら右にワープする
+						draw_character(BLACK);	//元居た位置を塗りつぶす
+						character.x = 150;
+					}
+					if (o != 1) {
+						character.x--;			//プレイヤーの座標変更
+					}
+				}
+			}
+
+		}
+	}
+	if (check3 == KEY_UP) {			//上キー入力時の移動
+		o = mode_up();				//上に壁があるかの判定
+		if (o != 1) {
+			draw_character(BLACK);	//元居た位置を塗りつぶす
+			character.y--;			//プレイヤーの座標変更
+			o = mode_up();			//上に壁があるかの判定
+			if (check5 == KEY_B && o != 1) {
+				character.y--;		//プレイヤーの座標変更
+				o = mode_up();		//上に壁があるかの判定
+				if (o != 1) {
+					character.y--;	//プレイヤーの座標変更
+				}
+			}
+		}
+	}
+	if (check4 == KEY_DOWN) {		//下キー入力時の移動
+		o = mode_down();			//下に壁があるかの判定
+		if (character.y<152 && o != 1) {
+			draw_character(BLACK);	//元居た位置を塗りつぶす
+			character.y++;			//プレイヤーの座標変更
+			o = mode_down();
+			if (check5 == KEY_B && o != 1) {
+				character.y++;		//プレイヤーの座標変更
+				o = mode_down();	//下に壁があるかの判定
+				if (o != 1) {
+					character.y++;	//プレイヤーの座標変更
+				}
+			}
+		}
+	}
+	draw_character(color);			//現在地にプレイヤーを描画する
+
+}
+
+void move_enemy(void) {
+	int o,p,q,r,s;
+	o = enemy_up();			//敵の上に壁があるか調べる
+	p = enemy_down();		//敵の下に壁があるか調べる
+	q = enemy_right();		//敵の右に壁があるか調べる
+	r = enemy_left();		//敵の左に壁があるか調べる
+
+	if (character.y < enemy.y && o != 1 && kabe2 == 0) {
+		draw_enemy(BLACK);	//元居た位置を塗りつぶす
+		enemy.y--;			//敵位置座標変更
+		enemy.y--;			//敵位置座標変更
+		kabe1 = 0;
+	}else if (character.y > enemy.y && p != 1 && kabe2 == 0) {
+		draw_enemy(BLACK);	//元居た位置を塗りつぶす
+		enemy.y++;			//敵位置座標変更
+		enemy.y++;			//敵位置座標変更
+		kabe1 = 0;
+	}else if (character.x < enemy.x && r != 1 && kabe1==0) {
+		draw_enemy(BLACK);	//元居た位置を塗りつぶす
+		enemy.x--;			//敵位置座標変更
+		enemy.x--;			//敵位置座標変更
+		kabe2 = 0;
+	}else if (character.x > enemy.x && q != 1 && kabe1==0) {
+		draw_enemy(BLACK);	//元居た位置を塗りつぶす
+		enemy.x++;			//敵位置座標変更
+		enemy.x++;			//敵位置座標変更
+		kabe2 = 0;
+	}
+	else if (character.y > enemy.y && p == 1 && kabe2 == 0) {
+		if (r != 1 && kabe1!=2) {
+			draw_enemy(BLACK);	//元居た位置を塗りつぶす
+			enemy.x--;		//敵位置座標変更
+			kabe1 = 1;
+		}
+		else if (q != 1) {
+			draw_enemy(BLACK);	//元居た位置を塗りつぶす
+			enemy.x++;		//敵位置座標変更
+			kabe1 = 2;
+		}
+	}else if (character.y < enemy.y && o == 1 && kabe2 == 0) {
+		if (r != 1 && kabe1 != 2) {
+			draw_enemy(BLACK);	//元居た位置を塗りつぶす
+			enemy.x--;		//敵位置座標変更
+			kabe1 = 1;
+		}
+		else if (q != 1) {
+			draw_enemy(BLACK);	//元居た位置を塗りつぶす
+			enemy.x++;		//敵位置座標変更
+			kabe1 = 2;
+		}
+	}
+	else if (character.x < enemy.x && r == 1 && kabe1 == 0) {
+		if (p != 1 && kabe2 != 2) {
+			draw_enemy(BLACK);	//元居た位置を塗りつぶす
+			enemy.y++;		//敵位置座標変更
+			kabe2 = 1;
+		}
+		else if (o != 1) {
+			draw_enemy(BLACK);	//元居た位置を塗りつぶす
+			enemy.y--;		//敵位置座標変更
+			kabe2 = 2;
+		}
+	}
+	else if (character.x > enemy.x && q == 1 && kabe1==0) {
+		if (p != 1 && kabe2 != 2) {
+			draw_enemy(BLACK);	//元居た位置を塗りつぶす
+			enemy.y++;		//敵位置座標変更
+			kabe2 = 1;
+		}
+		else if (o != 1) {
+			draw_enemy(BLACK);	//元居た位置を塗りつぶす
+			enemy.y--;		//敵位置座標変更
+			kabe2 = 2;
+		}
+	}
+	draw_enemy(CYAN);	//敵描画
+
+}
+
+void draw_character(hword color) {
+
+	hword tx, ty;							/* 文字パターンの座標指定 */
+	byte cbit;								/* ビット判定 */
+
+	for (ty = 0; ty < 8; ty++) {				/* 文字パターンのy座標指定 */
+
+		cbit = 0x80;						/* 判定ビットを8ビットの最上位にセット */
+
+		for (tx = 0; tx < 8; tx++) {							/* 文字パターンのx座標指定 */
+			if ((character2[ty] & cbit) == cbit) {			/* ビット位置の判定 */
+				draw_point((character.x + tx), (character.y + ty), color);	// 1なら設定した入力値の色
+			}
+			else {
+				draw_point((character.x + tx), (character.y + ty), BGR(0x00, 0x00, 0x00));	// 0なら黒
+			}
+			cbit = cbit >> 1;					/* 判定ビットを1ビット右へシフト */
+		}
+	}
+}
+
+
+void draw_enemy(hword color) {
+
+	hword tx, ty;							/* 文字パターンの座標指定 */
+	byte cbit;								/* ビット判定 */
+
+	for (ty = 0; ty < 8; ty++) {				/* 文字パターンのy座標指定 */
+
+		cbit = 0x80;						/* 判定ビットを8ビットの最上位にセット */
+
+		for (tx = 0; tx < 8; tx++) {							/* 文字パターンのx座標指定 */
+			if ((character2[ty] & cbit) == cbit) {			/* ビット位置の判定 */
+				draw_point((enemy.x + tx), (enemy.y + ty), color);	// 1なら入力値の色
+			}
+			else {
+				draw_point((enemy.x + tx), (enemy.y + ty), BGR(0x00, 0x00, 0x00));	// 0なら黒
+			}
+			cbit = cbit >> 1;					/* 判定ビットを1ビット右へシフト */
+		}
+	}
+
+}
+
+
+void item_prints(void) {
+
+	hword i, j;							/* 文字パターンの座標指定 */
+	stage_locate(item1.x, item1.y);
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (choco[i][j] == 1) {
+				draw_point(j + stagedot.x, i + stagedot.y, BROWN);
+			}
+			else if (choco[i][j] == 2) {
+				draw_point(j + stagedot.x, i + stagedot.y, RED);
+			}
+			else if (choco[i][j] == 3) {
+				draw_point(j + stagedot.x, i + stagedot.y, YELLOW);
+			}
+		}
+	}
+	stage_locate(item2.x, item2.y);
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (ice[i][j] == 1) {
+				draw_point(j + stagedot.x, i + stagedot.y, CYAN);
+			}
+			else if (ice[i][j] == 2) {
+				draw_point(j + stagedot.x, i + stagedot.y, YELLOW);
+			}
+		}
+	}
+	stage_locate(item3.x, item3.y);
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (donut[i][j] == 1) {
+				draw_point(j + stagedot.x, i + stagedot.y, BROWN);
+			}
+			else if (donut[i][j] == 2) {
+				draw_point(j + stagedot.x, i + stagedot.y, MAGENTA);
+			}
+			else if (donut[i][j] == 3) {
+				draw_point(j + stagedot.x, i + stagedot.y, CYAN);
+			}
+			else if (donut[i][j] == 4) {
+				draw_point(j + stagedot.x, i + stagedot.y, YELLOW);
+			}
+		}
+	}
+	stage_locate(item4.x, item4.y);
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (tea[i][j] == 1) {
+				draw_point(j + stagedot.x, i + stagedot.y, WHITE);
+			}
+			else if (tea[i][j] == 2) {
+				draw_point(j + stagedot.x, i + stagedot.y, BROWN);
+			}
+			else if (tea[i][j] == 3) {
+				draw_point(j + stagedot.x, i + stagedot.y, YELLOW);
+			}
+		}
+	}
+}
+
+//ステージ左半分の描画
+void draw_stage1(void) {
+
+	hword tx, ty;							/* 文字パターンの座標指定 */
+	unsigned int cbit;								/* ビット判定 */
+
+	for (ty = 0; ty < 20; ty++) {				/* 文字パターンのy座標指定 */
+
+		cbit = 0x200;						/* 判定ビットを8ビットの最上位にセット */
+
+		for (tx = 0; tx < 10; tx++) {
+			/* 文字パターンのx座標指定 */
+			if ((stage1[ty] & cbit) == cbit) {		/* ビット位置の判定 */
+				stage_locate(tx, ty);
+				print_8bitdot(BGR(0x00, 0x00, 0x1F));	// 1なら青の8×8の四角を描画
+			}
+			else {
+				stage_locate(tx, ty);
+				print_8bitdot(BGR(0x00, 0x00, 0x00));	// 0なら黒の8×8の四角を描画
+			}
+			cbit = cbit >> 1;					/* 判定ビットを1ビット右へシフト */
+		}
+	}
+}
+
+//左半分のデータを反転させてステージ右半分の描画
+void draw_stage2(void) {
+
+	hword tx, ty;							/* 文字パターンの座標指定 */
+	unsigned int cbit;								/* ビット判定 */
+
+	for (ty = 0; ty < 20; ty++) {				/* 文字パターンのy座標指定 */
+
+		cbit = 0x001;						/* 判定ビットを8ビットの最下位にセット */
+
+		for (tx = 0; tx < 10; tx++) {
+			/* 文字パターンのx座標指定 */
+			if ((stage1[ty] & cbit) == cbit) {		/* ビット位置の判定 */
+				stage_locate(tx + 10, ty);
+				print_8bitdot(BGR(0x00, 0x00, 0x1F));	// 1なら青の8×8の四角を描画
+			}
+			else {
+				stage_locate(tx + 10, ty);
+				print_8bitdot(BGR(0x00, 0x00, 0x00));	// 0なら黒の8×8の四角を描画
+			}
+			cbit = cbit << 1;					/* 判定ビットを1ビット左へシフト */
+		}
+	}
+}
+
+
+//1×1を8×8に変更する。
+void print_8bitdot(hword color) {
+
+	hword tx, ty;							/* 文字パターンの座標指定 */
+	byte cbit;								/* ビット判定 */
+
+	for (ty = 0; ty < 8; ty++) {				/* 文字パターンのy座標指定 */
+
+		cbit = 0x80;						/* 判定ビットを8ビットの最上位にセット */
+
+		for (tx = 0; tx < 8; tx++) {							/* 文字パターンのx座標指定 */
+			if ((character2[ty] & cbit) == cbit) {			/* ビット位置の判定 */
+				draw_point((stagedot.x + tx), (stagedot.y + ty), color);	// 1でも入力値
+			}
+			else {
+				draw_point((stagedot.x + tx), (stagedot.y + ty), color);	// 0でも入力値
+			}
+			cbit = cbit >> 1;					/* 判定ビットを1ビット右へシフト */
+		}
+	}
+}
+
+void stage_locate(hword cx, hword cy) {
+	if (cx < LCD_CHAR_WIDTH) {
+		stagedot.x = cx << 3;				/* x座標の指定 */
+	}
+	else {
+		stagedot.x = LCD_CHAR_WIDTH - 1;	/* xの最大値を設定 */
+	}
+	if (cy < LCD_CHAR_HEIGHT) {
+		stagedot.y = cy << 3;				/* y座標の指定 */
+	}
+	else {
+		stagedot.y = LCD_CHAR_HEIGHT - 1;	/* yの最大値を設定 */
+	}
+}
+
+int mode_up(void) {
+	int i,n;
+	hword *ptr;
+	n = 0;
+	for (i = 0; i < 8; i++) {
+		ptr = ptr = (hword*)VRAM;
+		ptr = ptr + character.x + i + (character.y - 1) * LCD_WIDTH;	//自機の上の座標をセットする
+		if (*ptr == BLUE) {		//自機の上が青なら1
+			n = 1;	
+		}
+	}
+	return n;		//nを返す
+}
+
+int mode_left(void) {
+	int i, n;
+	hword* ptr;
+	n = 0;
+	for (i = 0; i < 8; i++) {
+		ptr = ptr = (hword*)VRAM;
+		ptr = ptr + character.x - 1 + (character.y + i) * LCD_WIDTH;	//自機の左の座標をセットする
+		if (*ptr == BLUE) {			//自機の左が青なら1
+			n = 1;		
+		}
+	}
+	return n;			//nを返す
+}
+
+int mode_right(void) {
+	int i, n;
+	hword* ptr;
+	n = 0;
+	for (i = 0; i < 8; i++) {
+		ptr = ptr = (hword*)VRAM;
+		ptr = ptr + character.x + 8 + (character.y + i) * LCD_WIDTH;	//自機の右の座標をセットする
+		if (*ptr == BLUE) {				//自機の右が青なら1
+			n = 1;
+		}
+	}
+	return n;							//nを返す
+}
+
+int mode_down(void) {
+	int i, n;
+	hword* ptr;
+	n = 0;
+	for (i = 0; i < 8; i++) {
+		ptr = ptr = (hword*)VRAM;
+		ptr = ptr + character.x + i + (character.y + 8) * LCD_WIDTH;		//自機の下の座標をセットする
+		if (*ptr == BLUE) {			//自機の下が青なら1
+			n = 1;
+		}
+	}
+	return n;	//nを返す
+}
+
+
+//以下の4つのenemy関数はmove関数の自機に施す処理を敵に施したものである。
+int enemy_up(void) {
+	int i, n;
+	hword* ptr;
+	n = 0;
+	for (i = 0; i < 8; i++) {
+		ptr = ptr = (hword*)VRAM;
+		ptr = ptr + enemy.x + i + (enemy.y - 1) * LCD_WIDTH;
+		if (*ptr == BLUE) {
+			n = 1;
+		}
+	}
+	return n;
+}
+
+int enemy_left(void) {
+	int i, n;
+	hword* ptr;
+	n = 0;
+	for (i = 0; i < 8; i++) {
+		ptr = ptr = (hword*)VRAM;
+		ptr = ptr + enemy.x - 1 + (enemy.y + i) * LCD_WIDTH;
+		if (*ptr == BLUE) {
+			n = 1;
+		}
+	}
+	return n;
+}
+
+int enemy_right(void) {
+	int i, n;
+	hword* ptr;
+	n = 0;
+	for (i = 0; i < 8; i++) {
+		ptr = ptr = (hword*)VRAM;
+		ptr = ptr + enemy.x + 8 + (enemy.y + i) * LCD_WIDTH;
+		if (*ptr == BLUE) {
+			n = 1;
+		}
+	}
+	return n;
+}
+
+int enemy_down(void) {
+	int i, n;
+	hword* ptr;
+	n = 0;
+	for (i = 0; i < 8; i++) {
+		ptr = ptr = (hword*)VRAM;
+		ptr = ptr + enemy.x + i + (enemy.y + 8) * LCD_WIDTH;
+		if (*ptr == BLUE) {
+			n = 1;
+		}
+	}
+	return n;
+}
+
+
+void display_life(hword life, hword muteki) {
+	hword i,j,k;
+	j = life;
+	for (i = 0; i < 3; i++) {
+		locate(25+i, 2);
+		if (j > 0) {
+			print_ascii(3);		//体力の分だけハートを表示	
+			j--;
+		}
+		else if(j == 0) {
+			print_ascii(0);		//3－体力の文だけスペースを表示
+		}
+	}
+	k = muteki;
+	locate(25, 3);
+	if (k == 1) {
+		print_ascii(4);			//無敵になれる場合はダイヤを表示
+	}
+	else if (k == 0){
+		print_ascii(0);			//無敵になれない際はスペースを表示
+	}
+}
+
+void gameover(hword life) {
+	if (life == 0) {	//体力が0で処理を実行
+		while (screen == 2) {
+			locate(5, 10);
+			prints("GAME OVER");
+			hword* key, check;
+			key = (hword*)0x04000130;
+			locate(16, 19);
+			prints("PRESS B: BACK");
+			check = ~*key & KEY_B;
+			if (check == KEY_B) {		//Bボタンでタイトルに戻る
+				screen = 0;
+			}
+		}
+	}
+}
+
+void gameclear(hword score) {
+	if (score > 100) {	//得点が100以上で処理を実行
+		while (screen == 2) {
+			locate(5, 10);
+			prints("GAME CLEAR");
+			locate(16, 19);
+			prints("PRESS B: BACK");
+			hword* key, check;
+			key = (hword*)0x04000130;
+			check = ~*key & KEY_B;
+			if (check == KEY_B) {		//Bボタンでタイトルに戻る
+				screen = 0;
+			}
+		}
+	}
+}
+
+void get_item(hword item_x, hword item_y) {
+	hword tx, ty, ux, uy, i, j, k, l, mark;
+	mark = 0;
+	tx = character.x;
+	ty = character.y;
+	stage_locate(item_x, item_y);		//お菓子の位置を1マスずつの表記にする
+	ux = stagedot.x;
+	uy = stagedot.y;
+	//for文でお菓子と自機の接触を確かめる
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			for (k = 0; k < 8; k++) {
+				for (l = 0; l < 8; l++) {
+					if ((tx + k == ux + i) && (ty + l == uy + j)) {
+						print_8bitdot(BGR(0x00, 0x00, 0x00));		//お菓子を取得した際にお菓子のあった位置を塗りつぶす
+						if (item_x == item1.x) {
+							item1.x = 25;
+							item1.y = 12;
+						}
+						else if(item_x == item2.x) {
+							item2.x = 26;
+							item2.y = 12;
+						}
+						else if (item_x == item3.x) {
+							item3.x = 27;
+							item3.y = 12;
+						}
+						else if (item_x == item4.x) {
+							item4.x = 28;
+							item4.y = 12;
+						}
+						mark = 1;			//接触回数によらず1回でも触れたことを確認するための印
+						item_prints();		//現在の取得状況確認のためにアイテムを右側に表示
+					}
+				}
+			}
+		}
+	}
+	if (mark == 1) {
+		score = score + 3;		//アイテム取得してたらポイント
+		item = item + 1;		//ケーキを出現させるための現状のお菓子カウンター
+	}
+
+}
+
+void damage(void) {
+	hword tx, ty, ux, uy, i, j, k, l, mark;
+	mark = 0;
+	tx = character.x;
+	ty = character.y;
+	ux = enemy.x;
+	uy = enemy.y;
+	//for文で敵と自機の接触を確かめる
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			for (k = 0; k < 8; k++) {
+				for (l = 0; l < 8; l++) {
+					if ((tx + k == ux + i) && (ty + l == uy + j)) {
+						mark = 1;		//接触回数によらず1回でも触れたことを確認するための印
+					}
+				}
+			}
+		}
+	}
+	if (mark == 1) {
+		if (score > 10) {
+			score = score - 10;			//11点以上所持時のスコアの減点
+		}
+		else {
+			score = 0;					//10点以下の時のスコアの減点
+		}
+		life = life - 1;				//体力の減少
+		draw_enemy(BLACK);				//敵の居た位置を塗りつぶす
+		enemy.x = 96;					//敵を指定座標に飛ばす
+		enemy.y = 8;					//敵を指定座標に飛ばす
+	}
+
+}
+
+void reset_prints(void) {
+
+	hword i, j;							/* 文字パターンの座標指定 */
+	stage_locate(10, 11);				//ケーキの出現位置
+	for (i = 0; i < 8; i++) {			//ケーキの描画
+		for (j = 0; j < 8; j++) {
+			if (cake[i][j] == 1) {
+				draw_point(j + stagedot.x, i + stagedot.y, WHITE);
+			}
+			else if (cake[i][j] == 2) {
+				draw_point(j + stagedot.x, i + stagedot.y, RED);
+			}
+			else if (cake[i][j] == 3) {
+				draw_point(j + stagedot.x, i + stagedot.y, YELLOW);
+			}
+		}
+	}
+}
+
+void get_cake(void) {
+	hword tx, ty, ux, uy, i, j, k, l, mark;
+	mark = 0;
+	tx = character.x;
+	ty = character.y;
+	stage_locate(10, 11);		//ケーキの位置を1マスずつの表記にする
+	ux = stagedot.x;
+	uy = stagedot.y;
+	//for文でケーキと自機の接触を確かめる
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			for (k = 0; k < 8; k++) {
+				for (l = 0; l < 8; l++) {
+					if ((tx + k == ux + i) && (ty + l == uy + j)) {
+						print_8bitdot(BGR(0x00, 0x00, 0x00));		//ケーキを取得した際にケーキのあった位置を塗りつぶす
+						mark = 1;									//接触回数によらず1回でも触れたことを確認するための印
+					}
+				}
+			}
+		}
+	}
+
+	if (mark == 1) {
+		//視覚的なお菓子カウンターの消去
+		stage_locate(25,12);
+		print_8bitdot(BGR(0x00, 0x00, 0x00));
+		stage_locate(26, 12);
+		print_8bitdot(BGR(0x00, 0x00, 0x00));
+		stage_locate(27, 12);
+		print_8bitdot(BGR(0x00, 0x00, 0x00));
+		stage_locate(28, 12);
+		print_8bitdot(BGR(0x00, 0x00, 0x00));
+		draw_enemy(BLACK);			//敵の現在地を塗りつぶす
+
+		score = score + 5;	//得点加算
+		item = 0;			//お菓子カウンターをゼロにする
+		muteki = 1;
+		if (life < 3) {
+			life = life + 1;	//体力回復
+		}
+		//お菓子と敵を初期位置に再設定
+		item1.x = 1;
+		item1.y = 1;
+		item2.x = 4;
+		item2.y = 17;
+		item3.x = 15;
+		item3.y = 13;
+		item4.x = 11;
+		item4.y = 5;
+		enemy.x = 96;
+		enemy.y = 8;
+		item_prints();
+	}
+}
+
+void muteki_mode(void) {
+	if (muteki == 1) {
+		hword *key, check;
+		key = (hword*)0x04000130;
+		check = ~*key & KEY_A;
+		if (check == KEY_A) {			//Aボタンで無敵モードに突入
+			/* タイマ初期化 (0.01秒設定) */
+			init_timer();
+			/* タイマを起動 */
+			*((hword *)0x04000102) = 0x0080;
+			muteki = 0;					//無敵の残り回数を0にする
+			mutekimode = 1;				//無敵モードに入った印
+			color = GREEN;				//無敵中は自機を緑にする
+		}
+	}
+	locate(25, 0);
+	display_time(CURRENT_TIME);			//残り時間がわかりやすいように無敵モード発動からの時間表示
+	if (CURRENT_TIME > 0x003EB) {		//10秒後に無敵モード終了する
+		mutekimode = 0;
+		/* タイマを停止 */
+		*((hword *)0x0400010E) = 0x0004;	// タイマ3 制御設定（タイマOFF，割込みOFF，カスケードON，プリスケーラなし）
+		
+		
+		/* タイマ初期化 (0.01秒設定) */
+		init_timer();
+		CURRENT_TIME = 0x0000;
+		locate(25, 0);
+		display_time(CURRENT_TIME);			//無敵時間の表示を0にする
+		color = RED;						//通常時の自機の色に戻す
+	}
+}    
+    </code>
+  </pre>
+
+      
+  <h3>gba_io1.c</h3>
+      <pre>
+        <code>
+#include "gba1.h"
+#include "8x8ascii.h"
+
+
+/* 関数プロトタイプ宣言 */
+void locate(hword, hword);
+void printh(hword);
+void printn(hword);
+void prints(byte*);
+void print_ascii(byte);
+void draw_point(hword, hword, hword);
+hword mod(hword dividened, hword divisor);
+hword div(hword dividened, hword divisor);
+
+
+/* グローバル変数定義 */
+point p;				/* 座標指定用構造体 */
+
+
+/* 文字座標(0, 0)～(29,19)の位置(cx, cy)を画面座標に変換 */
+void locate(hword cx, hword cy){
+	if (cx < LCD_CHAR_WIDTH ) {
+		p.x = cx << 3;				/* x座標の指定 */
+	} else {
+		p.x = LCD_CHAR_WIDTH - 1;	/* xの最大値を設定 */
+	}
+	if (cy < LCD_CHAR_HEIGHT) {
+		p.y = cy << 3;				/* y座標の指定 */
+	} else {
+		p.y = LCD_CHAR_HEIGHT - 1;	/* yの最大値を設定 */
+	}
+}
+
+
+/* 引数を16進数として表示する関数（最大値16ビット）*/
+void printh(hword val) {
+
+	byte char_data[] = "0123456789ABCDEF";
+	byte buf[7];
+	hword tmp;
+	int i;
+
+	/* 入力値valの桁数判定 */
+	tmp = val;
+	for (i = 0; i < 4; i++) {
+		if (tmp > 0xF){
+			tmp = tmp >> 4;
+		} else {
+			break;
+		}
+	}
+
+	/* 文字列の最後にNULLコード挿入（"0x"の先頭2文字分の値をiに加算）*/
+	buf[i+3] = 0;
+
+	/* 最下位桁の文字を挿入し，入力値を4ビットシフト（"0x"の先頭2文字分の値をiに加算）*/
+	for (; i >= 0; i--) {
+		buf[i+2] = char_data[val & 0xF];
+		val = val >> 4;
+	}
+
+	/* 文字列先頭に16進数の"0x"を挿入 */
+	buf[1] = 'x';
+	buf[0] = '0';
+
+	/* 文字列全体を表示 */
+	prints(buf);
+	
+	return;
+}
+
+
+/* 引数を10進数として表示する関数（最大値16ビット）*/
+void printn(hword val) {
+
+	byte char_data[] = "0123456789";
+	byte buf[6];
+	hword tmp;
+	int i;
+	
+	/* 入力値valの桁数判定 */
+	tmp = val;
+	for (i = 0; i < 5; i++) {
+		if (tmp > 10){
+			tmp = div(tmp, 10);
+		} else {
+			break;
+		}
+	}
+
+	/* 文字列の最後にNULLコード挿入 */
+	buf[i+1] = 0;
+	
+	/* 最下位桁の文字（10で割った余り）を挿入し，入力値を10で割る */
+	for(; i >= 0; i--) {
+		buf[i] = char_data[mod(val, 10)];
+		val = div(val, 10);
+	}
+	
+	/* 文字列全体を表示 */
+	prints(buf);
+	
+	return;
+}
+
+
+/* 割り算の商を求める関数*/
+hword div(hword dividened, hword divisor){
+	
+	hword quotient = 0;			/* 商 */
+	
+	while(1){
+		if (dividened >= divisor){
+			dividened = dividened - divisor;
+			quotient++;
+		} else {
+			break;
+		}
+	}
+	return quotient;
+}
+
+
+/* 割り算の余りを求める関数*/
+hword mod(hword dividened, hword divisor){
+	
+	hword quotient = 0;			/* 商 */
+	
+	while(1){
+		if (dividened >= divisor){
+			dividened = dividened - divisor;
+			quotient++;
+		} else {
+			break;
+		}
+	}
+	return dividened;
+}
+
+
+/* 文字列表示関数 */
+void prints(byte *str) {
+
+	while(*str) {
+		print_ascii(*str++);
+		p.x = p.x + CHAR_WIDTH;			/* 表示位置を1文字右へ */
+	}	
+}
+
+
+/* locateで設定された位置にASCIIコードascii_numに相当する文字を表示する関数 */
+void print_ascii(byte ascii_num) {
+	
+	hword tx, ty;							/* 文字パターンの座標指定 */
+	byte cbit;								/* ビット判定 */
+
+	for(ty = 0; ty < 8; ty++) {				/* 文字パターンのy座標指定 */
+	
+		cbit = 0x80;						/* 判定ビットを8ビットの最上位にセット */
+		
+		for(tx = 0; tx < 8; tx++) {							/* 文字パターンのx座標指定 */
+			if((char8x8[ascii_num][ty] & cbit) == cbit){			/* ビット位置の判定 */
+				draw_point((p.x + tx), (p.y + ty), BGR(0x1F, 0x1F, 0x1F));	// 1なら白
+			}else {
+				draw_point((p.x + tx), (p.y + ty), BGR(0x00, 0x00, 0x00));	// 0なら黒
+			}
+			cbit = cbit >> 1;					/* 判定ビットを1ビット右へシフト */
+		}
+	}
+}
+
+
+/* 指定した座標(x, y) に指定した色colorの点を描画する関数 */
+void draw_point(hword x, hword y, hword color) {
+
+	hword *ptr;
+	ptr = (hword *) VRAM;
+	
+	ptr = ptr + x + y * LCD_WIDTH;
+	*ptr = color;
+
+}          
+        </code>
+      </pre>
 </body>
 </html>
