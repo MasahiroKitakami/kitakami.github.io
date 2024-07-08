@@ -23,6 +23,8 @@
   </p>
   <h2>ソースコード</h2>
   <h3>gba1.h</h3>
+<detail>
+<summary>gba1.h</summary>
   <pre>
     <code>
 #ifndef _GBA1_H_
@@ -66,8 +68,11 @@ typedef struct {
 #endif      
     </code>
   </pre>
+</detail>
 
   <h3>8x8ascii.h</h3>
+<detail>
+<summary>8x8ascii.h</summary>
   <pre>
     <code>
 unsigned char char8x8[256][8] = {
@@ -330,8 +335,11 @@ unsigned char char8x8[256][8] = {
  };      
     </code>
   </pre>
-  
+</detail>
+	
   <h3>main.c</h3>
+<detail>
+<summary>main.c</summary>
   <pre>
     <code>
 #include "gba1.h"
@@ -1421,9 +1429,11 @@ void muteki_mode(void) {
 }    
     </code>
   </pre>
-
+</detail>
       
   <h3>gba_io1.c</h3>
+<detail>
+<summary>gba_io1.c</summary>
       <pre>
         <code>
 #include "gba1.h"
@@ -1610,5 +1620,6 @@ void draw_point(hword x, hword y, hword color) {
 }          
         </code>
       </pre>
+		</detail>
 </body>
 </html>
